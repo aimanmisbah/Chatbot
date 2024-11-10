@@ -1,4 +1,3 @@
-
 # Step 2: Import Necessary Libraries
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
 
