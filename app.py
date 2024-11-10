@@ -1,55 +1,47 @@
-# Step 1: Import Necessary Libraries
 import streamlit as st
-from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
+import torch
+from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 
-# Step 2: Load a Pre-Trained Q&A Model
-model_name = "deepset/roberta-base-squad2"  # A Q&A model available on Hugging Face
+# Define the model name
+model_name = "bert-large-uncased-whole-word-masking-finetuned-squad"
+
+# Load pre-trained model and tokenizer
 model = AutoModelForQuestionAnswering.from_pretrained(model_name)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# Step 3: Create a Q&A Pipeline
-qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
+# Streamlit UI components
+st.title("Chatbot for Question Answering")
+st.write("Ask me a question, and I will answer based on the context.")
 
-# Step 4: Set the Expanded Context with Detailed Knowledge
-context = """
-Cancer is a disease where abnormal cells grow uncontrollably. There are many types of cancer, each with its own specific symptoms, causes, and treatment options.
+# Input the context (you can provide a default context here or allow the user to input)
+context = st.text_area("Enter the context", """
+Hugging Face is a company that provides state-of-the-art Natural Language Processing technology.
+It is famous for creating the Transformers library which is widely used for tasks such as text classification, question answering, and language modeling.
+""")
 
-Types of Cancer:
-- *Breast Cancer*: Common symptoms include lumps, changes in breast shape, and skin dimpling. Treatments include surgery, radiation, and chemotherapy.
-- *Lung Cancer*: Symptoms include coughing, chest pain, and weight loss. Risk factors include smoking, environmental toxins, and genetic factors.
-- *Colorectal Cancer*: Symptoms include changes in bowel habits, blood in stool, and abdominal discomfort. Early detection through screening improves survival rates.
-- *Prostate Cancer*: Common in older men. Symptoms include difficulty urinating, pelvic discomfort, and bone pain. Treatment may include radiation, surgery, and hormone therapy.
+# Input the question
+question = st.text_input("Enter your question:")
 
-Cancer Stages and Treatments:
-- *Stage 1 & 2*: Often involves surgery and radiation for localized tumors.
-- *Stage 3*: More advanced and may require chemotherapy and radiation.
-- *Stage 4*: Involves metastasis and may include targeted therapy, immunotherapy, and palliative care.
+# If question and context are provided, process the input and generate an answer
+if question and context:
+    # Tokenize the input
+    inputs = tokenizer(question, context, return_tensors="pt")
 
-Diet and Nutrition:
-- Cancer patients are advised to consume a high-protein diet to maintain strength.
-- Fruits and vegetables rich in antioxidants, like berries and leafy greens, support immune health.
-- Avoid processed foods, sugary drinks, and excessive red meat.
+    # Get model predictions
+    with torch.no_grad():
+        outputs = model(**inputs)
 
-Prevention Tips:
-- *Quit Smoking*: Reduces the risk of lung and several other cancers.
-- *Healthy Diet*: Focus on whole foods, limit alcohol, and include fiber for colon health.
-- *Regular Screenings*: Early detection increases treatment success.
+    # Extract the answer
+    start_scores = outputs.start_logits
+    end_scores = outputs.end_logits
 
-This context is continually updated with the latest cancer research, innovative treatments, and lifestyle recommendations for prevention and support.
-"""
+    # Find the start and end positions of the answer in the context
+    start_index = torch.argmax(start_scores)
+    end_index = torch.argmax(end_scores)
 
-# Streamlit app configuration
-st.title("Cancer Information Q&A Chatbot")
-st.write("Ask any question about cancer to get information based on available medical knowledge.")
+    # Convert token indices to actual answer words
+    answer_tokens = inputs.input_ids[0][start_index:end_index + 1]
+    answer = tokenizer.decode(answer_tokens)
 
-# Step 5: Input Question from the User
-question = st.text_input("Type your question below and press Enter:")
-
-# Step 6: Check if question is provided
-if question:
-    # Step 7: Use the Q&A pipeline to get the answer
-    result = qa_pipeline(question=question, context=context)
-    answer = result["answer"]
-    
-    # Step 8: Display the Answer
-    st.write("**Answer:**", answer)
+    # Display the answer
+    st.write(f"**Answer:** {answer}")
