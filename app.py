@@ -1,15 +1,16 @@
-# Step 2: Import Necessary Libraries
+# Step 1: Import Necessary Libraries
+import streamlit as st
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
 
-# Step 3: Load a Pre-Trained Q&A Model
+# Step 2: Load a Pre-Trained Q&A Model
 model_name = "deepset/roberta-base-squad2"  # A Q&A model available on Hugging Face
 model = AutoModelForQuestionAnswering.from_pretrained(model_name)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# Step 4: Create a Q&A Pipeline
+# Step 3: Create a Q&A Pipeline
 qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
 
-# Step 5: Set the Expanded Context with Detailed Knowledge
+# Step 4: Set the Expanded Context with Detailed Knowledge
 context = """
 Cancer is a disease where abnormal cells grow uncontrollably. There are many types of cancer, each with its own specific symptoms, causes, and treatment options.
 
@@ -37,16 +38,18 @@ Prevention Tips:
 This context is continually updated with the latest cancer research, innovative treatments, and lifestyle recommendations for prevention and support.
 """
 
-# Step 6: Define a Function to Ask Questions
-def ask_question(question):
-    result = qa_pipeline(question=question, context=context)
-    return result["answer"]
+# Streamlit app configuration
+st.title("Cancer Information Q&A Chatbot")
+st.write("Ask any question about cancer to get information based on available medical knowledge.")
 
-# Step 7: Start Asking Questions
-while True:
-    question = input("Ask a question about cancer (type 'exit' to quit): ")
-    if question.lower() == 'exit':
-        break
-    answer = ask_question(question)
-    print("Bot:", answer)
-    print("-" * 50)
+# Step 5: Input Question from the User
+question = st.text_input("Type your question below and press Enter:")
+
+# Step 6: Check if question is provided
+if question:
+    # Step 7: Use the Q&A pipeline to get the answer
+    result = qa_pipeline(question=question, context=context)
+    answer = result["answer"]
+    
+    # Step 8: Display the Answer
+    st.write("**Answer:**", answer)
