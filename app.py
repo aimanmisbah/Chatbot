@@ -1,5 +1,3 @@
-# Step 1: Install Required Libraries
-!pip install transformers fsspec==2024.10.0
 
 # Step 2: Import Necessary Libraries
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
