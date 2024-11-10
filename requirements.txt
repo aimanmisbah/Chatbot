@@ -1,2 +1,3 @@
 transformers[torch]
+torch
 fsspec==2024.10.0
